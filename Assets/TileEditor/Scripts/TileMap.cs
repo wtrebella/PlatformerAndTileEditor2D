@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
+public enum TileMapType {
+	XZ_3D,
+	XY_2D
+}
+
 public class TileMap : MonoBehaviour
 {
 	static Queue<PathTile> queue = new Queue<PathTile>();
@@ -16,6 +21,7 @@ public class TileMap : MonoBehaviour
 	public TileSet tileSet;
 	public bool connectDiagonals;
 	public bool cutCorners;
+	public TileMapType tileMapType;
 
 	public List<int> hashes = new List<int>(100000);
 	public List<Transform> prefabs = new List<Transform>(100000);
@@ -27,26 +33,29 @@ public class TileMap : MonoBehaviour
 		UpdateConnections();
 	}
 
-	public int GetHash(int x, int z)
+	public int GetHash(int x, int otherAxis)
 	{
-		return (x + TileMap.maxColumns / 2) + (z + TileMap.maxColumns / 2) * TileMap.maxColumns;
+		return (x + TileMap.maxColumns / 2) + (otherAxis + TileMap.maxColumns / 2) * TileMap.maxColumns;
 	}
 	
-	public int GetIndex(int x, int z)
+	public int GetIndex(int x, int otherAxis)
 	{
-		return hashes.IndexOf(GetHash(x, z));
+		return hashes.IndexOf(GetHash(x, otherAxis));
 	}
 	
 	public Vector3 GetPosition(int index)
 	{
 		index = hashes[index];
-		return new Vector3(((index % maxColumns) - (maxColumns / 2)) * tileSize, 0, ((index / maxColumns) - (maxColumns / 2)) * tileSize);
+		if (tileMapType == TileMapType.XZ_3D) return new Vector3(((index % maxColumns) - (maxColumns / 2)) * tileSize, 0, ((index / maxColumns) - (maxColumns / 2)) * tileSize);
+		else if (tileMapType == TileMapType.XY_2D) return new Vector3(((index % maxColumns) - (maxColumns / 2)) * tileSize, ((index / maxColumns) - (maxColumns / 2)) * tileSize, 0);
+		return Vector3.zero;
 	}
-	public void GetPosition(int index, out int x, out int z)
+
+	public void GetPosition(int index, out int x, out int otherAxis)
 	{
 		index = hashes[index];
 		x = (index % maxColumns) - (maxColumns / 2);
-		z = (index / maxColumns) - (maxColumns / 2);
+		otherAxis = (index / maxColumns) - (maxColumns / 2);
 	}
 
 	public void UpdateConnections()
@@ -58,41 +67,41 @@ public class TileMap : MonoBehaviour
 			var tile = instances[i].GetComponent<PathTile>();
 			if (tile != null)
 			{
-				int x, z;
-				GetPosition(i, out x, out z);
+				int x, otherAxis;
+				GetPosition(i, out x, out otherAxis);
 				tile.connections.Clear();
-				r = Connect(tile, x, z, x + 1, z);
-				l = Connect(tile, x, z, x - 1, z);
-				f = Connect(tile, x, z, x, z + 1);
-				b = Connect(tile, x, z, x, z - 1);
+				r = Connect(tile, x, otherAxis, x + 1, otherAxis);
+				l = Connect(tile, x, otherAxis, x - 1, otherAxis);
+				f = Connect(tile, x, otherAxis, x, otherAxis + 1);
+				b = Connect(tile, x, otherAxis, x, otherAxis - 1);
 				if (connectDiagonals)
 				{
 					if (cutCorners)
 					{
-						Connect(tile, x, z, x + 1, z + 1);
-						Connect(tile, x, z, x - 1, z - 1);
-						Connect(tile, x, z, x - 1, z + 1);
-						Connect(tile, x, z, x + 1, z - 1);
+						Connect(tile, x, otherAxis, x + 1, otherAxis + 1);
+						Connect(tile, x, otherAxis, x - 1, otherAxis - 1);
+						Connect(tile, x, otherAxis, x - 1, otherAxis + 1);
+						Connect(tile, x, otherAxis, x + 1, otherAxis - 1);
 					}
 					else
 					{
 						if (r != null && f != null)
-							Connect(tile, x, z, x + 1, z + 1);
+							Connect(tile, x, otherAxis, x + 1, otherAxis + 1);
 						if (l != null && b != null)
-							Connect(tile, x, z, x - 1, z - 1);
+							Connect(tile, x, otherAxis, x - 1, otherAxis - 1);
 						if (l != null && f != null)
-							Connect(tile, x, z, x - 1, z + 1);
+							Connect(tile, x, otherAxis, x - 1, otherAxis + 1);
 						if (r != null && b != null)
-							Connect(tile, x, z, x + 1, z - 1);
+							Connect(tile, x, otherAxis, x + 1, otherAxis - 1);
 					}
 				}
 			}
 		}
 	}
 
-	PathTile Connect(PathTile tile, int x, int z, int toX, int toZ)
+	PathTile Connect(PathTile tile, int x, int otherAxis, int toX, int toOtherAxis)
 	{
-		var index = GetIndex(toX, toZ);
+		var index = GetIndex(toX, toOtherAxis);
 		if (index >= 0)
 		{
 			var other = instances[index].GetComponent<PathTile>();
@@ -105,9 +114,9 @@ public class TileMap : MonoBehaviour
 		return null;
 	}
 
-	PathTile GetPathTile(int x, int z)
+	PathTile GetPathTile(int x, int otherAxis)
 	{
-		var index = GetIndex(x, z);
+		var index = GetIndex(x, otherAxis);
 		if (index >= 0)
 			return instances[index].GetComponent<PathTile>();
 		else
@@ -116,8 +125,10 @@ public class TileMap : MonoBehaviour
 	public PathTile GetPathTile(Vector3 position)
 	{
 		var x = Mathf.RoundToInt(position.x / tileSize);
-		var z = Mathf.RoundToInt(position.z / tileSize);
-		return GetPathTile(x, z);
+		int otherAxis = -1;
+		if (tileMapType == TileMapType.XZ_3D) otherAxis = Mathf.RoundToInt(position.z / tileSize);
+		else if (tileMapType == TileMapType.XY_2D) otherAxis = Mathf.RoundToInt(position.y / tileSize);
+		return GetPathTile(x, otherAxis);
 	}
 	
 	public bool FindPath(PathTile start, PathTile end, List<PathTile> path, Predicate<PathTile> isWalkable)
