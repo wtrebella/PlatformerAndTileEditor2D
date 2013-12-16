@@ -88,7 +88,6 @@ public class CharacterController2D : MonoBehaviour
 	[Range( 2, 20 )]
 	public int totalVerticalRays = 4;
 	
-	
 	[HideInInspector]
 	public new Transform transform;
 	[HideInInspector]

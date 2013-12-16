@@ -1,0 +1,16 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Demo/Scripts/AlternatinglyMovingObject.cs">
+    <Files>
+      <File FileName="Assets/TileEditor/Scripts/PathTile.cs" Line="1" Column="1" />
+      <File FileName="Assets/Demo/Scripts/AlternatinglyMovingObject.cs" Line="45" Column="1" />
+      <File FileName="Assets/Demo/Scripts/Player.cs" Line="206" Column="33" />
+      <File FileName="Assets/Demo/Scripts/NonMovingRigidbody.cs" Line="13" Column="33" />
+      <File FileName="Assets/Demo/Scripts/Fireball.cs" Line="36" Column="16" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
